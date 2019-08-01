@@ -11,7 +11,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.View;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -19,8 +21,6 @@ import android.widget.Toast;
 
 import com.gimbal.android.Beacon;
 import com.gimbal.android.BeaconSighting;
-import com.gimbal.android.Communication;
-import com.gimbal.android.CommunicationListener;
 import com.gimbal.android.CommunicationManager;
 import com.gimbal.android.Gimbal;
 import com.gimbal.android.PlaceEventListener;
@@ -52,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
 	private TextView textView;
 	private BluetoothAdapter mBluetoothAdapter;
 	private ArrayList<String> list;
+	private Menu menu;
+	private String onMenuTitle = "Turn on monitoring";
+	private String offMenuTitle = "Turn off monitoring";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -67,12 +70,48 @@ public class MainActivity extends AppCompatActivity {
 			list=savedInstanceState.getStringArrayList(STATE_KEY);
 		}
 
-		Gimbal.setApiKey(this.getApplication(), getString(R.string.gimbal_api_key));
-
-		checkLocationPermission();
+		checkLocationPermissionAndMonitor();
 	}
 
-	public void checkLocationPermission() {
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.menu_main, menu);
+		this.menu = menu;
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+		switch (item.getItemId()) {
+			case R.id.monitoring_setting:
+				// turn monitoring off/on
+				if (monitoringNotOn()) {
+					checkLocationPermissionAndMonitor();
+					item.setTitle(onMenuTitle);
+					textView.setText(getString(R.string.listening_for_beacons));
+					Log.d(TAG, "Menu item: monitoring is not active so starting it up");
+				}
+				else {
+					PlaceManager.getInstance().stopMonitoring();
+					CommunicationManager.getInstance().stopReceivingCommunications();
+					item.setTitle(offMenuTitle);
+					textView.setText(getString(R.string.monitoring_off));
+					textView.setTextColor(getResources().getColor(R.color.black));
+					Log.d(TAG, "Menu item: monitoring is active so stopping it");
+				}
+
+//			case R.id.instance_settting:
+//				// This dissociates a device and data (place events) reported by the application running on that device.
+//				// The open place sightings get closed on server. Data on device also gets cleared due to this API invocation.
+//				Gimbal.resetApplicationInstanceIdentifier();
+//				Log.d(TAG, "Menu item: resetting the App Instance Id");
+				return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
+	public void checkLocationPermissionAndMonitor() {
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // Android M Permission check
 
@@ -104,20 +143,22 @@ public class MainActivity extends AppCompatActivity {
 			@Override
 			public void onVisitStart(Visit visit) {
 				Toast.makeText(getApplicationContext(), String.format("Start Visit for %s", visit.getPlace().getName()), Toast.LENGTH_LONG).show();
-				textView.setText("Test Beacon is in Range");
+				textView.setText(getString(R.string.beacon_in_range));
 				textView.setTextColor(getResources().getColor(R.color.green));
 			}
 
 			@Override
 			public void onVisitEnd(Visit visit) {
 				Toast.makeText(getApplicationContext(), String.format("End Visit for %s", visit.getPlace().getName()), Toast.LENGTH_LONG).show();
-				textView.setText("Test Beacon is no longer in Range");
+				textView.setText(getString(R.string.beacon_out_of_range));
 				textView.setTextColor(getResources().getColor(R.color.red));
 			}
 
 			@Override
 			public void onBeaconSighting(BeaconSighting beaconSighting, List<Visit> list) {
 				data.put(beaconSighting.getBeacon().getName(), beaconSighting);
+
+				Log.d("onBeaconSighting: ", "getName is "+ beaconSighting.getBeacon().getName());
 
 				listAdapter.clear();
 				List<String> collection = asString(data.values());
@@ -142,20 +183,23 @@ public class MainActivity extends AppCompatActivity {
 			Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			textView.setText(getString(R.string.ble_not_activated));
 			startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+
 		} else {
 
 			placeManager = PlaceManager.getInstance();
 			placeManager.addListener(placeEventListener);
 			placeManager.startMonitoring();
 
-			CommunicationManager.getInstance().addListener(new CommunicationListener() {
-				@Override
-				public Collection<Communication> presentNotificationForCommunications(Collection<Communication> collection, Visit visit) {
-					return super.presentNotificationForCommunications(collection, visit);
-				}
-			});
+//			CommunicationManager.getInstance().addListener(new CommunicationListener() {
+//				@Override
+//				public Collection<Communication> presentNotificationForCommunications(Collection<Communication> collection, Visit visit) {
+//					return super.presentNotificationForCommunications(collection, visit);
+//				}
+//			});
+
 			CommunicationManager.getInstance().startReceivingCommunications();
 		}
+
 	}
 
 	private List<String> asString(Collection<BeaconSighting> v) {
@@ -211,5 +255,9 @@ public class MainActivity extends AppCompatActivity {
 	protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
 		super.onRestoreInstanceState(savedInstanceState);
 		list=savedInstanceState.getStringArrayList(STATE_KEY);
+	}
+
+	private boolean monitoringNotOn() {
+		return !PlaceManager.getInstance().isMonitoring();
 	}
 }

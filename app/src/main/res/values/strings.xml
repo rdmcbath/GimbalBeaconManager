@@ -1,7 +1,12 @@
 <resources>
     <string name="app_name">GimbalBeaconDemo</string>
-    <string name="listening_for_beacons">Listening for beacons …</string>
+    <string name="listening_for_beacons">Listening for beacons…</string>
+    <string name="monitoring_off">Monitoring has been turned off</string>
+    <string name="beacon_in_range">Beacon is in range</string>
+    <string name="beacon_out_of_range">Beacon is no longer in range</string>
     <string name="ble_not_supported">Bluetooth BLE is not supported</string>
     <string name="ble_not_activated">Bluetooth is not activated. Please activate bluetooth and restart the app.</string>
+    <string name="action_settings">Settings</string>
     <string name="gimbal_api_key">c65f52af-8556-40a6-ad69-f3536ab227dd</string>
+
 </resources>
