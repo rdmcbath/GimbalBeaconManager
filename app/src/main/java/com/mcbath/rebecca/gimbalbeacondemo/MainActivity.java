@@ -7,23 +7,25 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.gimbal.android.Beacon;
+import com.gimbal.android.BeaconEventListener;
+import com.gimbal.android.BeaconManager;
 import com.gimbal.android.BeaconSighting;
+import com.gimbal.android.Communication;
+import com.gimbal.android.CommunicationListener;
 import com.gimbal.android.CommunicationManager;
 import com.gimbal.android.Gimbal;
 import com.gimbal.android.PlaceEventListener;
@@ -42,16 +44,16 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 	private static final String TAG = "MainActivity";
 
-	private static final int PERMISSION_REQUEST_COARSE_LOCATION = 99;
+	private static final int PERMISSION_REQUEST_FINE_LOCATION = 99;
 	private static final int REQUEST_ENABLE_BT = 1;
 	public static final int TX_POWER = -60; // RSSI
 	private static final String STATE_KEY = "list_state";
 
-	private GimbalEventReceiver gimbalEventReceiver;
-	private GimbalEventListAdapter adapter;
-
 	private PlaceManager placeManager;
 	private PlaceEventListener placeEventListener;
+	private BeaconSighting beaconSighting;
+	private BeaconManager beaconManager;
+	private Beacon beacon;
 	private Map<String, BeaconSighting> data = new HashMap<>();
 	private ArrayAdapter<String> listAdapter;
 	private ListView listView;
@@ -59,27 +61,22 @@ public class MainActivity extends AppCompatActivity {
 	private BluetoothAdapter mBluetoothAdapter;
 	private ArrayList<String> list;
 	private Menu menu;
-	private String onMenuTitle = "Turn on monitoring";
-	private String offMenuTitle = "Turn off monitoring";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		Log.d(TAG, "onCreate MainActivity");
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-//		listAdapter = new ArrayAdapter<>(this, android.R.layout.simple_expandable_list_item_1);
-//		listView = findViewById(R.id.list);
-//		textView = findViewById(R.id.text);
-//		listView.setAdapter(listAdapter);
+		listAdapter = new ArrayAdapter<>(this, android.R.layout.simple_expandable_list_item_1);
+		listView = findViewById(R.id.list);
+		textView = findViewById(R.id.text);
+		listView.setAdapter(listAdapter);
 
 		textView = findViewById(R.id.text);
-		adapter = new GimbalEventListAdapter(this);
 
-		ListView listView = findViewById(R.id.list);
-		listView.setAdapter(adapter);
-
-		if (savedInstanceState != null){
-			list=savedInstanceState.getStringArrayList(STATE_KEY);
+		if (savedInstanceState != null) {
+			list = savedInstanceState.getStringArrayList(STATE_KEY);
 		}
 
 		checkLocationPermissionAndMonitor();
@@ -88,7 +85,6 @@ public class MainActivity extends AppCompatActivity {
 	// --------------------
 	// SETTINGS MENU
 	// --------------------
-
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -100,55 +96,36 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 
-		// item title is already set to "Turn monitoring off" at first, meaning the monitoring should be happening
 		switch (item.getItemId()) {
 			case R.id.monitoring_setting:
 				// turn monitoring off/on
-					if (monitoringNotOn()){
-						checkLocationPermissionAndMonitor();
-						item.setTitle(offMenuTitle);
-						textView.setText(getString(R.string.listening_for_beacons));
-						textView.setTextColor(getResources().getColor(R.color.green));
-					} else if (!monitoringNotOn()) {
-						PlaceManager.getInstance().stopMonitoring();
-						CommunicationManager.getInstance().stopReceivingCommunications();
-						item.setTitle(onMenuTitle);
-						textView.setText(getString(R.string.monitoring_off));
-						textView.setTextColor(getResources().getColor(R.color.red));
-					}
+				if (monitoringNotOn()) {
+					checkLocationPermissionAndMonitor();
+					item.setTitle(getString(R.string.offMenuTitle));
+					textView.setText(getString(R.string.listening_for_beacons));
+					textView.setTextColor(getResources().getColor(R.color.green));
+				} else if (!monitoringNotOn()) {
+					PlaceManager.getInstance().stopMonitoring();
+					CommunicationManager.getInstance().stopReceivingCommunications();
+					item.setTitle(getString(R.string.onMenuTitle));
+					textView.setText(getString(R.string.monitoring_off));
+					textView.setTextColor(getResources().getColor(R.color.red));
+				}
+				break;
+			case R.id.activation_setting:
+				// start activation activity
+				Intent intent = new Intent(MainActivity.this, ActivateBeaconActivity.class);
+				startActivity(intent);
+				break;
+			case R.id.instance_settting:
+				// This dissociates a device and data (place events) reported by the application running on that device.
+				// The open place sightings get closed on server. Data on device also gets cleared due to this API invocation.
+				Gimbal.resetApplicationInstanceIdentifier();
+				Log.d(TAG, "Menu item: resetting the App Instance Id");
 
-//			case R.id.instance_settting:
-//				// This dissociates a device and data (place events) reported by the application running on that device.
-//				// The open place sightings get closed on server. Data on device also gets cleared due to this API invocation.
-//				Gimbal.resetApplicationInstanceIdentifier();
-//				Log.d(TAG, "Menu item: resetting the App Instance Id");
 				return true;
 		}
 		return super.onOptionsItemSelected(item);
-	}
-
-
-	@Override
-	protected void onNewIntent(Intent intent) {
-		super.onNewIntent(intent);
-	}
-
-	@Override
-	protected void onStart() {
-		super.onStart();
-
-		gimbalEventReceiver = new GimbalEventReceiver();
-		IntentFilter intentFilter = new IntentFilter();
-		intentFilter.addAction(GimbalDAO.GIMBAL_NEW_EVENT_ACTION);
-		registerReceiver(gimbalEventReceiver, intentFilter);
-
-		adapter.setEvents(GimbalDAO.getEvents(getApplicationContext()));
-	}
-
-	@Override
-	protected void onStop() {
-		super.onStop();
-		unregisterReceiver(gimbalEventReceiver);
 	}
 
 	@Override
@@ -164,7 +141,6 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		adapter.setEvents(GimbalDAO.getEvents(getApplicationContext()));
 	}
 
 	public void checkLocationPermissionAndMonitor() {
@@ -173,62 +149,88 @@ public class MainActivity extends AppCompatActivity {
 
 			if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 				// Location permission was not granted already, so request
-				ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
+				ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
 			} else {
 				// Location permission was already granted
-				verifyBluetoothAndStartGimbal();
+				verifyBluetoothAndStartMonitoring();
 			}
 		}
 	}
 
 	@Override
 	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-		if (requestCode == PERMISSION_REQUEST_COARSE_LOCATION) {
+		if (requestCode == PERMISSION_REQUEST_FINE_LOCATION) {
 			if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 				// permission granted
-				verifyBluetoothAndStartGimbal();
+				verifyBluetoothAndStartMonitoring();
 			} else {
 				// permission denied or request cancelled
 			}
 		}
 	}
 
-	private void verifyBluetoothAndStartGimbal() {
+	private void verifyBluetoothAndStartMonitoring() {
 
-//		placeEventListener = new PlaceEventListener() {
+		// onBeaconSighting in BeaconManager will be invoked when a beacon is sighted
+//		beaconManager = new BeaconManager();
+//		beaconManager.addListener(new BeaconEventListener() {
 //			@Override
-//			public void onVisitStart(Visit visit) {
-//				Toast.makeText(getApplicationContext(), String.format("Start Visit for %s", visit.getPlace().getName()), Toast.LENGTH_LONG).show();
-//				textView.setText(getString(R.string.beacon_in_range));
-//				textView.setTextColor(getResources().getColor(R.color.green));
-//			}
+//			public void onBeaconSighting(BeaconSighting beaconSighting) {
+//				super.onBeaconSighting(beaconSighting);
 //
-//			@Override
-//			public void onVisitEnd(Visit visit) {
-//				Toast.makeText(getApplicationContext(), String.format("End Visit for %s", visit.getPlace().getName()), Toast.LENGTH_LONG).show();
-//				textView.setText(getString(R.string.beacon_out_of_range));
-//				textView.setTextColor(getResources().getColor(R.color.red));
-//			}
-//
-//			@Override
-//			public void onBeaconSighting(BeaconSighting beaconSighting, List<Visit> list) {
+//				final String id = beaconSighting.getBeacon().getIdentifier();
 //				data.put(beaconSighting.getBeacon().getName(), beaconSighting);
-//
-//				Log.d("onBeaconSighting: ", "getName is "+ beaconSighting.getBeacon().getName());
-//
 //				listAdapter.clear();
 //				List<String> collection = asString(data.values());
 //				listAdapter.addAll(collection);
 //				listAdapter.notifyDataSetChanged();
+//
+//				Log.d(TAG, "Beacon Found in BeaconManager: " + beaconSighting.getBeacon().toString() + " ---> RSSI is " + beaconSighting.getRSSI().toString());
+//
+//				listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//					@Override
+//					public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
+//
+//						Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+//						intent.putExtra("beacon_id", id);
+//						startActivity(intent);
+//					}
+//				});
 //			}
-//		};
+//		});
+
+		// create listener for beacon sightings within a place
+		placeEventListener = new PlaceEventListener() {
+
+			// onBeaconSighting in PlaceManager will will be invoked when a beacon assigned to a place within a current visit is sighted
+			@Override
+			public void onBeaconSighting(BeaconSighting beaconSighting, List<Visit> list) {
+
+				final String id = beaconSighting.getBeacon().getIdentifier();
+				data.put(beaconSighting.getBeacon().getName(), beaconSighting);
+				listAdapter.clear();
+				List<String> collection = asString(data.values());
+				listAdapter.addAll(collection);
+				listAdapter.notifyDataSetChanged();
+
+				Log.d(TAG, "Beacon Found in PlaceManager: " + beaconSighting.getBeacon().getName() + " ---> RSSI is " + beaconSighting.getRSSI().toString());
+
+				listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+					@Override
+					public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
+
+						Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+						intent.putExtra("beacon_id", id);
+						startActivity(intent);
+					}
+				});
+			}
+		};
 
 		// Initializes Bluetooth adapter
 		final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
 
-		if (bluetoothManager != null) {
-			mBluetoothAdapter = bluetoothManager.getAdapter();
-		}
+		mBluetoothAdapter = bluetoothManager.getAdapter();
 
 		//  BT not activated
 		if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
@@ -240,36 +242,45 @@ public class MainActivity extends AppCompatActivity {
 			textView.setText(getString(R.string.ble_not_activated));
 			startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
 
-		} else {
-//			placeManager = PlaceManager.getInstance();
-//			placeManager.addListener(placeEventListener);
-//			placeManager.startMonitoring();
-//			CommunicationManager.getInstance().startReceivingCommunications();
+		} else { //  BT is activated, we can start monitoring for beacons
+			placeManager = PlaceManager.getInstance();
+			placeManager.addListener(placeEventListener);
+			placeManager.startMonitoring();
 
-			enableGimbalMonitoring();
+//			beaconManager.startListening();
+
+			CommunicationManager.getInstance().addListener(new CommunicationListener() {
+				@Override
+				public Collection<Communication> presentNotificationForCommunications(Collection<Communication> collection, Visit visit) {
+					return super.presentNotificationForCommunications(collection, visit);
+				}
+			});
+			CommunicationManager.getInstance().startReceivingCommunications();
 		}
+
+		Log.d(TAG, "Location enabled and bluetooth verified ==> START MONITORING");
 	}
 
-//	private List<String> asString(Collection<BeaconSighting> v) {
-//		List<BeaconSighting> values = new ArrayList<>(v);
-//		Collections.sort(values, new Comparator<BeaconSighting>() {
-//			@Override
-//			public int compare(BeaconSighting lhs, BeaconSighting rhs) {
-//				return rhs.getRSSI().compareTo(lhs.getRSSI());
-//			}
-//		});
-//
-//		list = new ArrayList<>();
-//		for (BeaconSighting beaconSighting : values) {
-//			Beacon beacon = beaconSighting.getBeacon();
-//			double accuracy = calculateAccuracy(beaconSighting.getRSSI());
-//			DecimalFormat df = new DecimalFormat("#.00");
-//			String format = String.format("Name: %S - ID: %s\nRange ~ %sm (%sdb)", beacon.getName(), beacon.getIdentifier(), df.format(accuracy), beaconSighting.getRSSI());
-//			list.add(format);
-//		}
-//
-//		return list;
-//	}
+	private List<String> asString(Collection<BeaconSighting> v) {
+		List<BeaconSighting> values = new ArrayList<>(v);
+		Collections.sort(values, new Comparator<BeaconSighting>() {
+			@Override
+			public int compare(BeaconSighting lhs, BeaconSighting rhs) {
+				return rhs.getRSSI().compareTo(lhs.getRSSI());
+			}
+		});
+
+		list = new ArrayList<>();
+		for (BeaconSighting beaconSighting : values) {
+			beacon = beaconSighting.getBeacon();
+			double accuracy = calculateAccuracy(beaconSighting.getRSSI());
+			DecimalFormat df = new DecimalFormat("#.00");
+			String format = String.format("Name: %S - ID: %s\nRange ~ %sm (%sdb)", beacon.getName(), beacon.getIdentifier(), df.format(accuracy), beaconSighting.getRSSI());
+			list.add(format);
+		}
+
+		return list;
+	}
 
 	protected static double calculateAccuracy(double rssi) {
 		if (rssi == 0) {
@@ -293,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
 	//    }
 
 	@Override
-	protected void onSaveInstanceState(Bundle outState) {
+	protected void onSaveInstanceState(@NonNull Bundle outState) {
 		//onSaveInstanceState is called before going to another activity or orientation change
 		outState.putStringArrayList(STATE_KEY, list);
 		super.onSaveInstanceState(outState);
@@ -305,28 +316,7 @@ public class MainActivity extends AppCompatActivity {
 		list = savedInstanceState.getStringArrayList(STATE_KEY);
 	}
 
-	private void enableGimbalMonitoring() {
-		Gimbal.start();
-	}
-
-	private boolean monitoringNotOn() {
-
+	public boolean monitoringNotOn() {
 		return !PlaceManager.getInstance().isMonitoring();
-	}
-
-
-	// --------------------
-	// EVENT RECEIVER
-	// --------------------
-
-	class GimbalEventReceiver extends BroadcastReceiver {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			if (intent.getAction() != null) {
-				if (intent.getAction().compareTo(GimbalDAO.GIMBAL_NEW_EVENT_ACTION) == 0) {
-					adapter.setEvents(GimbalDAO.getEvents(getApplicationContext()));
-				}
-			}
-		}
 	}
 }

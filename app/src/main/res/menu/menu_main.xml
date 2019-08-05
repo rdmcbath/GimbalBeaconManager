@@ -6,13 +6,19 @@
     <item
         android:id="@+id/monitoring_setting"
         android:orderInCategory="100"
-        android:title="Turn monitoring off"
+        android:title="Turn scan off"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/activation_setting"
+        android:orderInCategory="100"
+        android:title="Activate new beacon"
         app:showAsAction="never" />
 
-    <!--<item-->
-        <!--android:id="@+id/instance_settting"-->
-        <!--android:orderInCategory="200"-->
-        <!--android:title="Reset App Instance Id"-->
-        <!--app:showAsAction="never" />-->
+    <item
+        android:id="@+id/instance_settting"
+        android:orderInCategory="200"
+        android:title="Reset App Instance Id"
+        app:showAsAction="never" />
 
 </menu>
