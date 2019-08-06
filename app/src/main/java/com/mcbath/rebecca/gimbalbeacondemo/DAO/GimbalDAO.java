@@ -1,9 +1,10 @@
-package com.mcbath.rebecca.gimbalbeacondemo;
+package com.mcbath.rebecca.gimbalbeacondemo.DAO;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+
+import com.mcbath.rebecca.gimbalbeacondemo.Models.GimbalEvent;
 
 import org.json.JSONArray;
 import org.json.JSONException;

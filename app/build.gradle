@@ -26,6 +26,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     implementation 'com.loopj.android:android-async-http:1.4.9'
     implementation "androidx.preference:preference:1.1.0-rc01"
+    implementation 'com.google.code.gson:gson:2.8.5'
 
     implementation 'com.gimbal.android.v4:gimbal-sdk:4.2.0'
     implementation 'com.gimbal.android.v4:gimbal-slf4j-impl:4.2.0'

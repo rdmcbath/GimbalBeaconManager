@@ -27,6 +27,7 @@ import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import androidx.annotation.NonNull;
@@ -180,14 +181,13 @@ public class ManageBeaconActivity extends AppCompatActivity {
 		//		params.put("config_id", "100");
 		//		params.put("visibility", "private");
 		//		params.put("contact_emails", "rdmcbath@outlook.com");
-		client.post(BASE_URL_PARAMS, params, new JsonHttpResponseHandler() {
+		client.post(BASE_URL_PARAMS, params, new AsyncHttpResponseHandler() {
 
 			// When the response returned by REST has Http response code '200'
 			@Override
-			public void onSuccess(int statusCode, Header[] headers, JSONObject responseBody) {
-				super.onSuccess(statusCode, headers, responseBody);
+			public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
 
-				String jsonResponse = responseBody.toString();
+				String jsonResponse = Arrays.toString(responseBody);
 				Log.i(TAG, "onSuccess: " + jsonResponse);
 				// Hide Progress Dialog
 				Toast.makeText(getApplicationContext(), "Success - Activated Beacon!", Toast.LENGTH_LONG).show();
@@ -195,8 +195,7 @@ public class ManageBeaconActivity extends AppCompatActivity {
 
 			// When the response returned by REST has Http response code other than '200'
 			@Override
-			public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
-				super.onFailure(statusCode, headers, throwable, errorResponse);
+			public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
 
 				// When Http response code is '404'
 				if (statusCode == 404) {

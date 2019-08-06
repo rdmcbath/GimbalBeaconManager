@@ -1,4 +1,4 @@
-package com.mcbath.rebecca.gimbalbeacondemo;
+package com.mcbath.rebecca.gimbalbeacondemo.UI;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,7 +21,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.gimbal.android.Beacon;
-import com.gimbal.android.BeaconEventListener;
 import com.gimbal.android.BeaconManager;
 import com.gimbal.android.BeaconSighting;
 import com.gimbal.android.CommunicationManager;
@@ -29,6 +28,7 @@ import com.gimbal.android.Gimbal;
 import com.gimbal.android.PlaceEventListener;
 import com.gimbal.android.PlaceManager;
 import com.gimbal.android.Visit;
+import com.mcbath.rebecca.gimbalbeacondemo.R;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -271,7 +271,8 @@ public class MainActivity extends AppCompatActivity {
 			beacon = beaconSighting.getBeacon();
 			double range = calculateAccuracy(beaconSighting.getRSSI());
 			DecimalFormat df = new DecimalFormat("#.00");
-			String format = String.format("Name: %S - ID: %s\nRange ~ %sm (%sdb)", beacon.getName(), beacon.getIdentifier(), df.format(range), beaconSighting.getRSSI());
+//			String format = String.format("Name: %S \nRange ~ %sm (%sdb)", beacon.getName(), df.format(range), beaconSighting.getRSSI());
+			String format = ("Name: " + beacon.getName() + "\n" + "Range: " + df.format(range) + "\n" + "RSSI: " + beaconSighting.getRSSI());
 			list.add(format);
 		}
 

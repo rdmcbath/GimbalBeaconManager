@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">GimbalBeaconDemo</string>
-    <string name="listening_for_beacons">Listening for beacons…</string>
-    <string name="monitoring_off">Monitoring has been turned off</string>
+    <string name="listening_for_beacons">Monitoring is on…scanning for beacons</string>
+    <string name="monitoring_off">Monitoring is off</string>
     <string name="beacon_in_range">Beacon is in range</string>
     <string name="beacon_out_of_range">Beacon is no longer in range</string>
     <string name="ble_not_supported">Bluetooth BLE is not supported</string>

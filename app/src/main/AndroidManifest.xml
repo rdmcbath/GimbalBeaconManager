@@ -22,16 +22,16 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".UI.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ManageBeaconActivity"
-            android:parentActivityName=".MainActivity"/>
-        <activity android:name=".DetailActivity"
-            android:parentActivityName=".MainActivity"/>
+        <activity android:name=".UI.ManageBeaconActivity"
+            android:parentActivityName=".UI.MainActivity"/>
+        <activity android:name=".UI.DetailActivity"
+            android:parentActivityName=".UI.MainActivity"/>
     </application>
 
 </manifest>

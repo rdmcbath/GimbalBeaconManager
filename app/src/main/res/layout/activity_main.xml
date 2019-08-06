@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.mcbath.rebecca.gimbalbeacondemo.MainActivity">
+    tools:context="com.mcbath.rebecca.gimbalbeacondemo.UI.MainActivity">
 
     <TextView
         android:id="@+id/text"
