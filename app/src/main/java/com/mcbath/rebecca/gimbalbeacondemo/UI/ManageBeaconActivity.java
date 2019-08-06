@@ -35,6 +35,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.entity.StringEntity;
 
 /**
  * Created by Rebecca McBath
@@ -44,8 +45,8 @@ public class ManageBeaconActivity extends AppCompatActivity {
 	private static final String TAG = "ManageBeaconActivity";
 
 	private EditText editText;
-	private static final String BASE_URL = "https://manager.gimbal.com/api/beacons";
-	private static final String BASE_URL_PARAMS = "https://manager.gimbal.com/api/beacons/?";
+	private static final String BASE_URL = "https://manager.gimbal.com/api/beacons/";
+	private static final String BASE_URL_PARAMS = "https://manager.gimbal.com/api/beacons?";
 	private String inputText;
 	private RecyclerView rvBeacons;
 	private List<Beacon> beacons;
@@ -67,21 +68,21 @@ public class ManageBeaconActivity extends AppCompatActivity {
 		rvBeacons.setLayoutManager(new LinearLayoutManager(this));
 
 		editText.addTextChangedListener(new TextWatcher() {
-				@Override
-				public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-				}
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+			}
 
-				@Override
-				public void onTextChanged(CharSequence s, int start, int before, int count) {
-				}
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+			}
 
-				@Override
-				public void afterTextChanged(Editable s) {
-					if (editText.length() == 4) {
-						editText.append("-");
-					}
+			@Override
+			public void afterTextChanged(Editable s) {
+				if (editText.length() == 4) {
+					editText.append("-");
 				}
-			});
+			}
+		});
 	}
 
 	@Override
@@ -176,19 +177,20 @@ public class ManageBeaconActivity extends AppCompatActivity {
 		RequestParams params = new RequestParams();
 		params.put("factory_id", inputText);
 		params.put("name", "Beacon added from mobile app");
-		//		params.put("latitude", "");
-		//		params.put("longitude", "");
-		//		params.put("config_id", "100");
-		//		params.put("visibility", "private");
-		//		params.put("contact_emails", "rdmcbath@outlook.com");
+//		params.put("latitude", "");
+//		params.put("longitude", "");
+//		params.put("config_id", "100");
+//		params.put("visibility", "private");
+//		params.put("contact_emails", "rdmcbath@outlook.com");
+		params.setUseJsonStreamer(true);
 		client.post(BASE_URL_PARAMS, params, new AsyncHttpResponseHandler() {
 
 			// When the response returned by REST has Http response code '200'
 			@Override
 			public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
 
-				String jsonResponse = Arrays.toString(responseBody);
-				Log.i(TAG, "onSuccess: " + jsonResponse);
+				String JSONString = new String(responseBody, StandardCharsets.UTF_8);
+				Log.i(TAG, "onSuccess: " + JSONString);
 				// Hide Progress Dialog
 				Toast.makeText(getApplicationContext(), "Success - Activated Beacon!", Toast.LENGTH_LONG).show();
 			}
@@ -225,22 +227,12 @@ public class ManageBeaconActivity extends AppCompatActivity {
 			// When the response returned by REST has Http response code '200'
 			@Override
 			public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+
+				String JSONString = new String(responseBody, StandardCharsets.UTF_8);
+				Log.i(TAG, "onSuccess: " + JSONString);
+
 				// Hide Progress Dialog
 				Toast.makeText(getApplicationContext(), "Success - Deactivated Beacon!", Toast.LENGTH_LONG).show();
-
-				try {
-					String JSONString = new String(responseBody, StandardCharsets.UTF_8);
-
-					// JSON Object
-					JSONObject obj = new JSONObject(JSONString);
-					Log.d(TAG, JSONString + "JSONObject is null? " + obj.get("name").toString());
-					Log.d(TAG, String.format("%s\n", obj.toString()));
-
-				} catch (JSONException e) {
-					Toast.makeText(getApplicationContext(), "Error Occured [Server's JSON response might be invalid]!", Toast.LENGTH_LONG).show();
-					e.printStackTrace();
-
-				}
 			}
 
 			// When the response returned by REST has Http response code other than '200'
@@ -264,7 +256,7 @@ public class ManageBeaconActivity extends AppCompatActivity {
 		});
 	}
 
-	public void populateList(){
+	public void populateList() {
 		adapter = new BeaconAdapter(beacons);
 		rvBeacons.setAdapter(adapter);
 		adapter.notifyDataSetChanged();
