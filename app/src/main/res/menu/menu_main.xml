@@ -12,7 +12,7 @@
     <item
         android:id="@+id/activation_setting"
         android:orderInCategory="100"
-        android:title="Activate new beacon"
+        android:title="Manage beacons"
         app:showAsAction="never" />
 
     <item

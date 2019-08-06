@@ -22,6 +22,7 @@ public class GimbalDAO {
 	public static final String PLACE_MONITORING_PREFERENCE = "pref_place_monitoring";
 	public static final String SHOW_OPT_IN_PREFERENCE = "pref_show_opt_in";
 	private static final String EVENTS_KEY = "events";
+	private static SharedPreferences prefs;
 
 	// --------------
 	// GIMBAL EVENTS
@@ -31,7 +32,7 @@ public class GimbalDAO {
 
 		List<GimbalEvent> events = new ArrayList<GimbalEvent>();
 		try {
-			SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+			prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
 			String jsonString = prefs.getString(EVENTS_KEY, null);
 			if (jsonString != null) {
 				JSONArray jsonArray = new JSONArray(jsonString);
@@ -53,7 +54,7 @@ public class GimbalDAO {
 
 	public static void setEvents(Context context, List<GimbalEvent> events) {
 		try {
-			SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+			prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
 			JSONArray jsonArray = new JSONArray();
 			for (GimbalEvent event : events) {
 				JSONObject jsonObject = new JSONObject();
@@ -76,6 +77,12 @@ public class GimbalDAO {
 		catch (JSONException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public static void clearPrefs() {
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.clear();
+		editor.commit();
 	}
 }
 

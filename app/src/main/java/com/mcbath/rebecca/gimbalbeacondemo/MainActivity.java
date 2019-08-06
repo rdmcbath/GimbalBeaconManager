@@ -24,8 +24,6 @@ import com.gimbal.android.Beacon;
 import com.gimbal.android.BeaconEventListener;
 import com.gimbal.android.BeaconManager;
 import com.gimbal.android.BeaconSighting;
-import com.gimbal.android.Communication;
-import com.gimbal.android.CommunicationListener;
 import com.gimbal.android.CommunicationManager;
 import com.gimbal.android.Gimbal;
 import com.gimbal.android.PlaceEventListener;
@@ -104,17 +102,19 @@ public class MainActivity extends AppCompatActivity {
 					item.setTitle(getString(R.string.offMenuTitle));
 					textView.setText(getString(R.string.listening_for_beacons));
 					textView.setTextColor(getResources().getColor(R.color.green));
+					Log.d(TAG, "Scan has been turned on in Settings");
 				} else if (!monitoringNotOn()) {
 					PlaceManager.getInstance().stopMonitoring();
 					CommunicationManager.getInstance().stopReceivingCommunications();
 					item.setTitle(getString(R.string.onMenuTitle));
 					textView.setText(getString(R.string.monitoring_off));
 					textView.setTextColor(getResources().getColor(R.color.red));
+					Log.d(TAG, "Scan has been turned off in Settings");
 				}
 				break;
 			case R.id.activation_setting:
 				// start activation activity
-				Intent intent = new Intent(MainActivity.this, ActivateBeaconActivity.class);
+				Intent intent = new Intent(MainActivity.this, ManageBeaconActivity.class);
 				startActivity(intent);
 				break;
 			case R.id.instance_settting:
@@ -185,12 +185,13 @@ public class MainActivity extends AppCompatActivity {
 //				listAdapter.addAll(collection);
 //				listAdapter.notifyDataSetChanged();
 //
-//				Log.d(TAG, "Beacon Found in BeaconManager: " + beaconSighting.getBeacon().toString() + " ---> RSSI is " + beaconSighting.getRSSI().toString());
+//				Log.d(TAG, "Beacon Found in BeaconManager: " + beaconSighting.getBeacon().getIdentifier() + ": " + beaconSighting.getBeacon().toString() + " ---> RSSI is " + beaconSighting.getRSSI().toString());
 //
 //				listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 //					@Override
 //					public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
 //
+//						listAdapter.getPosition(id);
 //						Intent intent = new Intent(MainActivity.this, DetailActivity.class);
 //						intent.putExtra("beacon_id", id);
 //						startActivity(intent);
@@ -209,16 +210,17 @@ public class MainActivity extends AppCompatActivity {
 				final String id = beaconSighting.getBeacon().getIdentifier();
 				data.put(beaconSighting.getBeacon().getName(), beaconSighting);
 				listAdapter.clear();
-				List<String> collection = asString(data.values());
+				final List<String> collection = asString(data.values());
 				listAdapter.addAll(collection);
 				listAdapter.notifyDataSetChanged();
 
-				Log.d(TAG, "Beacon Found in PlaceManager: " + beaconSighting.getBeacon().getName() + " ---> RSSI is " + beaconSighting.getRSSI().toString());
+				Log.d(TAG, "Beacon Found in PlaceManager: " + beaconSighting.getBeacon().getIdentifier() + ": " + beaconSighting.getBeacon().getName() + " ---> RSSI is " + beaconSighting.getRSSI().toString());
 
 				listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 					@Override
 					public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
 
+						listAdapter.getPosition(id);
 						Intent intent = new Intent(MainActivity.this, DetailActivity.class);
 						intent.putExtra("beacon_id", id);
 						startActivity(intent);
@@ -249,12 +251,6 @@ public class MainActivity extends AppCompatActivity {
 
 //			beaconManager.startListening();
 
-			CommunicationManager.getInstance().addListener(new CommunicationListener() {
-				@Override
-				public Collection<Communication> presentNotificationForCommunications(Collection<Communication> collection, Visit visit) {
-					return super.presentNotificationForCommunications(collection, visit);
-				}
-			});
 			CommunicationManager.getInstance().startReceivingCommunications();
 		}
 
@@ -273,15 +269,16 @@ public class MainActivity extends AppCompatActivity {
 		list = new ArrayList<>();
 		for (BeaconSighting beaconSighting : values) {
 			beacon = beaconSighting.getBeacon();
-			double accuracy = calculateAccuracy(beaconSighting.getRSSI());
+			double range = calculateAccuracy(beaconSighting.getRSSI());
 			DecimalFormat df = new DecimalFormat("#.00");
-			String format = String.format("Name: %S - ID: %s\nRange ~ %sm (%sdb)", beacon.getName(), beacon.getIdentifier(), df.format(accuracy), beaconSighting.getRSSI());
+			String format = String.format("Name: %S - ID: %s\nRange ~ %sm (%sdb)", beacon.getName(), beacon.getIdentifier(), df.format(range), beaconSighting.getRSSI());
 			list.add(format);
 		}
 
 		return list;
 	}
 
+	// calculate range (distance from beacon)
 	protected static double calculateAccuracy(double rssi) {
 		if (rssi == 0) {
 			return -1.0; // if we cannot determine accuracy, return -1.
@@ -294,14 +291,6 @@ public class MainActivity extends AppCompatActivity {
 			return (0.89976) * Math.pow(ratio, 7.7095) + 0.111;
 		}
 	}
-
-	//    private String renderRange(Integer rssi) {
-	//        if (rssi < -100) return "    ";
-	//        else if (rssi > -100 && rssi <= -80) return "+   ";
-	//        else if (rssi > -80 && rssi <= -55) return "++  ";
-	//        else if (rssi > -55 && rssi <= -35) return "+++ ";
-	//        else return "++++";
-	//    }
 
 	@Override
 	protected void onSaveInstanceState(@NonNull Bundle outState) {
