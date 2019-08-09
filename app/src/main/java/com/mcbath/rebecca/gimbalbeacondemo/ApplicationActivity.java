@@ -17,7 +17,6 @@ public class ApplicationActivity extends Application {
 		Log.d("-----", "ApplicationActivity created");
 
 		GimbalIntegration.init(this).onCreate();
-		Gimbal.start();
 	}
 
 	@Override
@@ -25,6 +24,5 @@ public class ApplicationActivity extends Application {
 		super.onTerminate();
 
 		GimbalIntegration.init(this).onTerminate();
-		Gimbal.stop();
 	}
 }

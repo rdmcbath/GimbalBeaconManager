@@ -4,11 +4,11 @@ import android.app.Application;
 import android.app.Notification;
 import android.content.Context;
 import android.content.Intent;
-
 import com.gimbal.android.Communication;
 import com.gimbal.android.CommunicationListener;
 import com.gimbal.android.CommunicationManager;
 import com.gimbal.android.Gimbal;
+import com.gimbal.android.GimbalDebugger;
 import com.gimbal.android.PlaceEventListener;
 import com.gimbal.android.PlaceManager;
 import com.gimbal.android.Push;
@@ -16,7 +16,6 @@ import com.gimbal.android.Visit;
 import com.mcbath.rebecca.gimbalbeacondemo.DAO.GimbalDAO;
 import com.mcbath.rebecca.gimbalbeacondemo.Models.GimbalEvent;
 import com.mcbath.rebecca.gimbalbeacondemo.UI.MainActivity;
-
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,11 +35,9 @@ public class GimbalIntegration {
 
 	private Application app;
 	private Context appContext;
-
 	private LinkedList<GimbalEvent> events;
 	private PlaceEventListener placeEventListener;
 	private CommunicationListener communicationListener;
-
 	private static GimbalIntegration instance;
 
 	public static GimbalIntegration init(Application app) {
@@ -65,6 +62,9 @@ public class GimbalIntegration {
 	public void onCreate() {
 		Gimbal.setApiKey(app, GIMBAL_APP_API_KEY);
 
+		GimbalDebugger.enableBeaconSightingsLogging();
+		GimbalDebugger.enablePlaceLogging();
+
 		if (ENABLE_PUSH_MESSAGING != null) {
 			// Only needs to be enabled once per app instance.  Additional calls will have no effect.
 			CommunicationManager.getInstance().enablePushMessaging(ENABLE_PUSH_MESSAGING);
@@ -72,7 +72,7 @@ public class GimbalIntegration {
 
 		events = new LinkedList<>(GimbalDAO.getEvents(app));
 
-		// Setup PlaceEventListener for beacon events (sightings done in MainActivity)
+		// Setup PlaceEventListener for beacon events
 		placeEventListener = new PlaceEventListener() {
 
 			@Override
@@ -134,6 +134,7 @@ public class GimbalIntegration {
 				}
 			}
 		};
+
 		CommunicationManager.getInstance().addListener(communicationListener);
 	}
 

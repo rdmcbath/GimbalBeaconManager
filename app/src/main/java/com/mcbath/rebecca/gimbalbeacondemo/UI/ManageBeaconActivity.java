@@ -7,35 +7,25 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Adapter;
 import android.widget.EditText;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
-
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
-import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
-import com.mcbath.rebecca.gimbalbeacondemo.Adapters.BeaconAdapter;
+import com.mcbath.rebecca.gimbalbeacondemo.Adapters.ManageBeaconAdapter;
 import com.mcbath.rebecca.gimbalbeacondemo.Models.Beacon;
 import com.mcbath.rebecca.gimbalbeacondemo.R;
-
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.entity.StringEntity;
 
 /**
  * Created by Rebecca McBath
@@ -50,7 +40,7 @@ public class ManageBeaconActivity extends AppCompatActivity {
 	private String inputText;
 	private RecyclerView rvBeacons;
 	private List<Beacon> beacons;
-	private BeaconAdapter adapter;
+	private ManageBeaconAdapter adapter;
 	private ProgressBar progressBar;
 
 	@Override
@@ -58,7 +48,7 @@ public class ManageBeaconActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_manage_beacon);
 
-		getSupportActionBar().setTitle("Activate Beacon");
+		getSupportActionBar().setTitle("Manage Beacons");
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		getSupportActionBar().setDisplayShowHomeEnabled(true);
 
@@ -87,16 +77,12 @@ public class ManageBeaconActivity extends AppCompatActivity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.menu_activate, menu);
 		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
-		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
 		if (id == R.id.action_settings) {
 			return true;
@@ -119,7 +105,7 @@ public class ManageBeaconActivity extends AppCompatActivity {
 				progressBar.setVisibility(View.GONE);
 
 				beacons = new ArrayList<>();
-				adapter = new BeaconAdapter(beacons);
+				adapter = new ManageBeaconAdapter(beacons);
 
 				try {
 					String JSONString = new String(responseBody, StandardCharsets.UTF_8);
@@ -257,7 +243,7 @@ public class ManageBeaconActivity extends AppCompatActivity {
 	}
 
 	public void populateList() {
-		adapter = new BeaconAdapter(beacons);
+		adapter = new ManageBeaconAdapter(beacons);
 		rvBeacons.setAdapter(adapter);
 		adapter.notifyDataSetChanged();
 	}

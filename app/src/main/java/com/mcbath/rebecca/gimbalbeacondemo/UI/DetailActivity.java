@@ -72,8 +72,6 @@ public class DetailActivity extends AppCompatActivity {
 				// clear the list of events and restart
 				GimbalDAO.clearPrefs();
 				listView.setAdapter(null);
-				adapter = new GimbalEventListAdapter(this);
-				listView.setAdapter(adapter);
 				adapter.setEvents(GimbalDAO.getEvents(getApplicationContext()));
 				break;
 			case R.id.home:

@@ -19,12 +19,12 @@ import androidx.recyclerview.widget.RecyclerView;
  * Created by Rebecca McBath
  * on 2019-08-06.
  */
-public class BeaconAdapter extends RecyclerView.Adapter<BeaconAdapter.ViewHolder> {
+public class ManageBeaconAdapter extends RecyclerView.Adapter<ManageBeaconAdapter.ViewHolder> {
 	private static final String TAG = "ManageBeaconActivity";
 
 	private List<Beacon> beaconList;
 
-	public BeaconAdapter(List<Beacon> beacons) {
+	public ManageBeaconAdapter(List<Beacon> beacons) {
 		beaconList = beacons;
 	}
 
@@ -47,19 +47,19 @@ public class BeaconAdapter extends RecyclerView.Adapter<BeaconAdapter.ViewHolder
 
 	@NonNull
 	@Override
-	public BeaconAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+	public ManageBeaconAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 		Context context = parent.getContext();
 		LayoutInflater inflater = LayoutInflater.from(context);
 
 		// Inflate the custom layout
-		View contactView = inflater.inflate(R.layout.beacon_row_item, parent, false);
+		View contactView = inflater.inflate(R.layout.manage_beacon_row_item, parent, false);
 
 		// Return a new holder instance
 		return new ViewHolder(contactView);
 	}
 
 	@Override
-	public void onBindViewHolder(@NonNull BeaconAdapter.ViewHolder holder, int position) {
+	public void onBindViewHolder(@NonNull ManageBeaconAdapter.ViewHolder holder, int position) {
 
 		holder.nameTextView.setText(beaconList.get(position).getName());
 	}
