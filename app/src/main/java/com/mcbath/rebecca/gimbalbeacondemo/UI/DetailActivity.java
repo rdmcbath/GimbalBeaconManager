@@ -42,7 +42,7 @@ public class DetailActivity extends AppCompatActivity {
 		String id = intent.getStringExtra("beacon_id");
 		Log.d(TAG, "Intent Extra Id is " + id);
 
-		getSupportActionBar().setTitle("Detail for " + id);
+		getSupportActionBar().setTitle("Beacon Events");
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		getSupportActionBar().setDisplayShowHomeEnabled(true);
 
@@ -70,9 +70,10 @@ public class DetailActivity extends AppCompatActivity {
 		switch (item.getItemId()) {
 			case R.id.clear_list:
 				// clear the list of events and restart
-				GimbalDAO.clearPrefs();
 				listView.setAdapter(null);
-				adapter.setEvents(GimbalDAO.getEvents(getApplicationContext()));
+				adapter.notifyDataSetChanged();
+				adapter = new GimbalEventListAdapter(this);
+				listView.setAdapter(adapter);
 				break;
 			case R.id.home:
 				finish();

@@ -10,15 +10,15 @@
         app:showAsAction="always" />
 
     <item
-        android:id="@+id/activation_setting"
-        android:orderInCategory="100"
-        android:title="Manage beacons"
+        android:id="@+id/event_setting"
+        android:orderInCategory="200"
+        android:title="Beacon events"
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/instance_settting"
-        android:orderInCategory="200"
-        android:title="Reset App Instance Id"
+        android:id="@+id/manage_setting"
+        android:orderInCategory="300"
+        android:title="Manage beacons"
         app:showAsAction="never" />
 
 </menu>

@@ -7,7 +7,6 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -21,19 +20,16 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.gimbal.android.Beacon;
 import com.gimbal.android.BeaconEventListener;
 import com.gimbal.android.BeaconManager;
 import com.gimbal.android.BeaconSighting;
 import com.gimbal.android.CommunicationManager;
 import com.gimbal.android.Gimbal;
-import com.gimbal.android.GimbalDebugger;
 import com.gimbal.android.PlaceEventListener;
 import com.gimbal.android.PlaceManager;
 import com.gimbal.android.Visit;
 import com.mcbath.rebecca.gimbalbeacondemo.R;
-
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -117,16 +113,14 @@ public class MainActivity extends AppCompatActivity {
 					Log.d(TAG, "Scan has been turned off in Settings");
 				}
 				break;
-			case R.id.activation_setting:
-				// start activation activity
-				Intent intent = new Intent(MainActivity.this, ManageBeaconActivity.class);
-				startActivity(intent);
+			case R.id.event_setting:
+				Intent eventIntent = new Intent(MainActivity.this, DetailActivity.class);
+				startActivity(eventIntent);
 				break;
-			case R.id.instance_settting:
-				// This dissociates a device and data (place events) reported by the application running on that device.
-				// The open place sightings get closed on server. Data on device also gets cleared due to this API invocation.
-				Gimbal.resetApplicationInstanceIdentifier();
-				Log.d(TAG, "Menu item: resetting the App Instance Id");
+			case R.id.manage_setting:
+				// start activation activity
+				Intent manageIntent = new Intent(MainActivity.this, ManageBeaconActivity.class);
+				startActivity(manageIntent);
 
 				return true;
 		}
@@ -165,35 +159,12 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
+	// --------------------
+	// BEACON LISTENING
+	// --------------------
+
 	// onBeaconSighting in BeaconManager only invoked when a beacon that's not associated to a Place, is sighted
 	// This doesn't seem to be working on it's own. It will work when within the Place Monitoring
-	private void listenForBeacons() {
-
-		beaconManager = new BeaconManager();
-
-		beaconEventListener = new BeaconEventListener(){
-			@Override
-			public void onBeaconSighting(BeaconSighting beaconSighting) {
-				super.onBeaconSighting(beaconSighting);
-
-				final String id = beaconSighting.getBeacon().getIdentifier();
-				data.put(beaconSighting.getBeacon().getName(), beaconSighting);
-				listAdapter.clear();
-				List<String> collection = asString(data.values());
-				listAdapter.addAll(collection);
-				listAdapter.notifyDataSetChanged();
-
-				Log.d(TAG, "Beacon Found in BeaconManager: " + beaconSighting.getBeacon().getName());
-			}
-		};
-		Log.d(TAG, "BeaconEventListener started sucessfully...scanning for beacon sightings");
-
-		beaconManager.addListener(beaconEventListener);
-		beaconManager.startListening();
-		CommunicationManager.getInstance().startReceivingCommunications();
-	}
-
-	// onBeaconSighting in BeaconManager only invoked when a beacon that's not associated to a Place, is sighted
 	private void enableBeaconMonitoring() {
 
 		beaconManager = new BeaconManager();
@@ -203,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
 			public void onBeaconSighting(BeaconSighting beaconSighting) {
 				super.onBeaconSighting(beaconSighting);
 
-				final String id = beaconSighting.getBeacon().getIdentifier();
+				final String id = beaconSighting.getBeacon().getName();
 				data.put(beaconSighting.getBeacon().getName(), beaconSighting);
 				listAdapter.clear();
 				List<String> collection = asString(data.values());
@@ -224,8 +195,8 @@ public class MainActivity extends AppCompatActivity {
 				});
 			}
 		});
-		beaconManager.startListening();
 
+		beaconManager.startListening();
 		CommunicationManager.getInstance().startReceivingCommunications();
 
 		Log.d(TAG, "==> ENABLED BEACON SIGHTING MONITORING");
@@ -288,7 +259,9 @@ public class MainActivity extends AppCompatActivity {
 		return list;
 	}
 
-	// calculate range (distance from beacon)
+	// ---------------------------
+	// RSSI - DISTANCE CONVERSION
+	// ---------------------------
 	protected static double calculateAccuracy(double rssi) {
 		if (rssi == 0) {
 			return -1.0; // if we cannot determine accuracy, return -1.
@@ -359,7 +332,7 @@ public class MainActivity extends AppCompatActivity {
 	protected void onDestroy() {
 		super.onDestroy();
 		Gimbal.stop();
-		beaconManager.removeListener(beaconEventListener);
+//		beaconManager.removeListener(beaconEventListener);
 	}
 
 	@Override
